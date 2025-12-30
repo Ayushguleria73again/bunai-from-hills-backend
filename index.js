@@ -5,35 +5,33 @@ const cors = require("cors")
 const path = require("path")
 
 const app = express()
-const PORT = process.env.PORT || 5001
 
 // --------------------
 // CORS CONFIG (VERCEL SAFE)
 // --------------------
 const allowedOrigins = [
-  process.env.CLIENT_URL, // https://bunai-from-hills.vercel.app
-  process.env.ADMIN_URL   // https://bunai-from-hills-admin.vercel.app
+  process.env.CLIENT_URL,
+  process.env.ADMIN_URL
 ]
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow server-to-server, Postman, Vercel health checks
     if (!origin) return callback(null, true)
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true)
     } else {
-      callback(new Error("Not allowed by CORS"))
+      callback(null, false)
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }
 
-// 🔥 IMPORTANT: CORS must be first
+// ✅ MUST be first
 app.use(cors(corsOptions))
 
-// 🔥 REQUIRED for Vercel preflight requests
+// ✅ REQUIRED for preflight
 app.options("*", cors(corsOptions))
 
 // --------------------
@@ -48,15 +46,21 @@ app.use(express.urlencoded({ extended: true }))
 app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
 // --------------------
-// DATABASE CONNECTION
+// DATABASE (connect once)
 // --------------------
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err)
-    process.exit(1)
-  })
+let isConnected = false
+
+async function connectDB() {
+  if (isConnected) return
+  await mongoose.connect(process.env.MONGODB_URI)
+  isConnected = true
+  console.log("✅ MongoDB connected")
+}
+
+app.use(async (req, res, next) => {
+  await connectDB()
+  next()
+})
 
 // --------------------
 // ROUTES
@@ -71,34 +75,10 @@ app.use("/api/orders", require("./routes/orders"))
 // HEALTH CHECK
 // --------------------
 app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Bunai From Hills API is running 🚀"
-  })
+  res.json({ success: true, message: "Bunai From Hills API running 🚀" })
 })
 
 // --------------------
-// GLOBAL ERROR HANDLER
+// EXPORT (🔥 THIS FIXES CORS)
 // --------------------
-app.use((err, req, res, next) => {
-  console.error("🔥 Error:", err.message)
-
-  if (err.message === "Not allowed by CORS") {
-    return res.status(403).json({
-      success: false,
-      message: "CORS Error: Origin not allowed"
-    })
-  }
-
-  res.status(500).json({
-    success: false,
-    message: "Internal Server Error"
-  })
-})
-
-// --------------------
-// START SERVER (LOCAL ONLY)
-// --------------------
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`)
-})
+module.exports = app
