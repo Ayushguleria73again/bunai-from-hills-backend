@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5001
 // MIDDLEWARE
 // --------------------
 app.use(cors({
-  origin: "*",
+  origin: ["*", process.env.PORT1],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
