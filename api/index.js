@@ -37,11 +37,11 @@ mongoose.connect(process.env.MONGODB_URI)
 // -------------------
 // ROUTES
 // -------------------
-app.use('/api/contact', require('./routes/contact'))
-app.use('/api/gallery', require('./routes/gallery'))
-app.use('/api/blog', require('./routes/blog'))
-app.use('/api/products', require('./routes/products'))
-app.use('/api/orders', require('./routes/orders'))
+app.use('/api/contact', require('../routes/contact'))
+app.use('/api/gallery', require('../routes/gallery'))
+app.use('/api/blog', require('../routes/blog'))
+app.use('/api/products', require('../routes/products'))
+app.use('/api/orders', require('../routes/orders'))
 
 // --------------------
 // HEALTH CHECK
