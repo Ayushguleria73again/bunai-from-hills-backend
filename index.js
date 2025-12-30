@@ -5,13 +5,13 @@ const cors = require("cors")
 const path = require("path")
 
 const app = express()
-const PORT = process.env.PORT || 5001
+const PORT = process.env.PORT
 
 // --------------------
 // MIDDLEWARE
 // --------------------
 app.use(cors({
-  origin: ["*"],
+  origin: process.env.ADMIN_URL,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }))
