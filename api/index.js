@@ -5,15 +5,6 @@ const cors = require("cors")
 const path = require("path")
 
 const app = express()
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*")
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204)
-  }
-
-  next()
-})
 
 const PORT = process.env.PORT
 
