@@ -6,7 +6,7 @@ const path = require("path")
 
 const app = express()
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*")
+  res.header("Access-Control-Allow-Origin", "*")
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(204)
