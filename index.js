@@ -5,18 +5,6 @@ const cors = require("cors")
 const path = require("path")
 
 const app = express()
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*")
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204)
-  }
-
-  next()
-})
-
 const PORT = process.env.PORT
 
 // --------------------
@@ -49,11 +37,11 @@ mongoose.connect(process.env.MONGODB_URI)
 // -------------------
 // ROUTES
 // -------------------
-app.use('/api/contact', require('../routes/contact'))
-app.use('/api/gallery', require('../routes/gallery'))
-app.use('/api/blog', require('../routes/blog'))
-app.use('/api/products', require('../routes/products'))
-app.use('/api/orders', require('../routes/orders'))
+app.use('/api/contact', require('./routes/contact'))
+app.use('/api/gallery', require('./routes/gallery'))
+app.use('/api/blog', require('./routes/blog'))
+app.use('/api/products', require('./routes/products'))
+app.use('/api/orders', require('./routes/orders'))
 
 // --------------------
 // HEALTH CHECK
