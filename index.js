@@ -12,14 +12,29 @@ const allowedOrigin = [process.env.ADMIN_URL , process.env.CLIENT_URL]
 // --------------------
 // MIDDLEWARE
 // --------------------
+const allowedOrigins = [
+  process.env.ADMIN_URL,
+  process.env.CLIENT_URL,
+]
+
 app.use(cors({
-  origin: allowedOrigin,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: function (origin, callback) {
+    // Allow server-to-server & Postman requests
+    if (!origin) return callback(null, true)
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    } else {
+      return callback(new Error("Not allowed by CORS"))
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false,
 }))
 
-app.use(express.json({ limit: "10mb" })) // 🔥 REQUIRED
-app.use(express.urlencoded({ extended: true }))
+// 🔥 REQUIRED for preflight on Vercel
+app.options("*", cors())
 
 // --------------------
 // STATIC FILES
