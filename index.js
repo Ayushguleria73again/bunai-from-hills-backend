@@ -1,38 +1,44 @@
 require("dotenv").config()
 const express = require("express")
 const mongoose = require("mongoose")
-const cors = require("cors")
 const path = require("path")
 
 const app = express()
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 5001
 
 // --------------------
-// MIDDLEWARE
+// MIDDLEWARE (CORS FIX)
 // --------------------
-const allowedOrigins = [
-  process.env.ADMIN_URL,
-  process.env.CLIENT_URL,
-]
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    "https://bunai-from-hills.vercel.app",
+    "https://bunai-from-hills-admin.vercel.app"
+  ]
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow server-to-server & Postman requests
-    if (!origin) return callback(null, true)
+  const origin = req.headers.origin
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true)
-    } else {
-      return callback(new Error("Not allowed by CORS"))
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: false,
-}))
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin)
+  }
 
-// 🔥 REQUIRED for preflight on Vercel
-app.options("*", cors())
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  )
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  )
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end()
+  }
+
+  next()
+})
+
+app.use(express.json({ limit: "10mb" }))
+app.use(express.urlencoded({ extended: true }))
 
 // --------------------
 // STATIC FILES
@@ -62,7 +68,7 @@ app.use('/api/orders', require('./routes/orders'))
 // HEALTH CHECK
 // --------------------
 app.get("/", (req, res) => {
-  res.status(200).json({ message: "Bunai From The Hills API is running!" })
+  res.json({ message: "Bunai From The Hills API is running!" })
 })
 
 // --------------------
