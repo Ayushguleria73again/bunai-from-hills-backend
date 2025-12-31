@@ -19,6 +19,7 @@ app.use((req, res, next) => {
 
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin)
+    res.setHeader("Vary", "Origin") // ✅ prevents cache-related CORS bugs
   }
 
   res.setHeader(
@@ -43,12 +44,13 @@ app.use(express.urlencoded({ extended: true }))
 // --------------------
 // STATIC FILES
 // --------------------
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
 // --------------------
 // DATABASE
 // --------------------
-mongoose.connect(process.env.MONGODB_URI)
+mongoose
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => {
     console.error("MongoDB error:", err)
@@ -58,11 +60,11 @@ mongoose.connect(process.env.MONGODB_URI)
 // -------------------
 // ROUTES
 // -------------------
-app.use('/api/contact', require('./routes/contact'))
-app.use('/api/gallery', require('./routes/gallery'))
-app.use('/api/blog', require('./routes/blog'))
-app.use('/api/products', require('./routes/products'))
-app.use('/api/orders', require('./routes/orders'))
+app.use("/api/contact", require("./routes/contact"))
+app.use("/api/gallery", require("./routes/gallery"))
+app.use("/api/blog", require("./routes/blog"))
+app.use("/api/products", require("./routes/products"))
+app.use("/api/orders", require("./routes/orders"))
 
 // --------------------
 // HEALTH CHECK
