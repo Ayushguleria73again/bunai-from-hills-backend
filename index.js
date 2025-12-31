@@ -4,6 +4,8 @@ const mongoose = require("mongoose")
 const path = require("path")
 
 const app = express()
+app.use(express.json())
+
 const PORT = process.env.PORT || 5001
 
 // --------------------
@@ -60,6 +62,7 @@ mongoose
 // -------------------
 // ROUTES
 // -------------------
+
 app.use("/api/contact", require("./routes/contact"))
 app.use("/api/gallery", require("./routes/gallery"))
 app.use("/api/blog", require("./routes/blog"))
