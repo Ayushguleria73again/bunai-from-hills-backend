@@ -7,7 +7,7 @@ const path = require('path');
 // Multer configuration for gallery image uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, path.join(__dirname, '../uploads'));
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
@@ -30,8 +30,7 @@ router.get('/', async (req, res) => {
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const { title, description, category } = req.body;
-    
-    // If an image was uploaded, add the image path and URL to the gallery data
+
     if (req.file) {
       const galleryItem = new Gallery({
         title,
@@ -40,7 +39,7 @@ router.post('/', upload.single('image'), async (req, res) => {
         imageUrl: `/uploads/${req.file.filename}`,
         category
       });
-      
+
       await galleryItem.save();
       res.status(201).json(galleryItem);
     } else {

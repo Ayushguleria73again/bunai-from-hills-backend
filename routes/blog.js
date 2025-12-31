@@ -7,7 +7,7 @@ const path = require('path');
 // Multer configuration for blog image uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, path.join(__dirname, '../uploads'));
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
@@ -55,8 +55,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const { title, excerpt, content, author, category, readTime, tags, published } = req.body;
-    
-    // Parse tags if it's a string
+
     let parsedTags = [];
     if (tags) {
       try {
@@ -77,7 +76,6 @@ router.post('/', upload.single('image'), async (req, res) => {
       published: published === 'true'
     };
 
-    // If an image was uploaded, add the image path and URL to the blog data
     if (req.file) {
       blogData.image = req.file.path;
       blogData.imageUrl = `/uploads/${req.file.filename}`;
@@ -96,8 +94,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 router.put('/:id', upload.single('image'), async (req, res) => {
   try {
     const { title, excerpt, content, author, category, readTime, tags, published } = req.body;
-    
-    // Parse tags if it's a string
+
     let parsedTags = [];
     if (tags) {
       try {
@@ -118,16 +115,21 @@ router.put('/:id', upload.single('image'), async (req, res) => {
       published: published === 'true'
     };
 
-    // If an image was uploaded, add the image path and URL to the blog data
     if (req.file) {
       blogData.image = req.file.path;
       blogData.imageUrl = `/uploads/${req.file.filename}`;
     }
 
-    const blog = await Blog.findByIdAndUpdate(req.params.id, blogData, { new: true });
+    const blog = await Blog.findByIdAndUpdate(
+      req.params.id,
+      blogData,
+      { new: true }
+    );
+
     if (!blog) {
       return res.status(404).json({ error: "Blog post not found" });
     }
+
     res.json(blog);
   } catch (error) {
     console.error("Error updating blog post:", error);

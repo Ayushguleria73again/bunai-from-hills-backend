@@ -7,7 +7,7 @@ const path = require('path');
 // Multer configuration for product image uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, path.join(__dirname, '../uploads'));
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
@@ -44,13 +44,12 @@ router.get('/:id', async (req, res) => {
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const productData = req.body;
-    
-    // If an image was uploaded, add the image path and URL to the product data
+
     if (req.file) {
       productData.image = req.file.path;
       productData.imageUrl = `/uploads/${req.file.filename}`;
     }
-    
+
     const product = new Product(productData);
     await product.save();
     res.status(201).json(product);
@@ -64,21 +63,22 @@ router.post('/', upload.single('image'), async (req, res) => {
 router.put('/:id', upload.single('image'), async (req, res) => {
   try {
     const productData = req.body;
-    
-    // If an image was uploaded, update the image path and URL
+
     if (req.file) {
       productData.image = req.file.path;
       productData.imageUrl = `/uploads/${req.file.filename}`;
     }
-    
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       productData,
       { new: true, runValidators: true }
     );
+
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
+
     res.json(product);
   } catch (error) {
     console.error("Error updating product:", error);
