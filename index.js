@@ -4,7 +4,6 @@ const mongoose = require("mongoose")
 const path = require("path")
 
 const app = express()
-app.use(express.json())
 
 const PORT = process.env.PORT || 5001
 
@@ -42,11 +41,6 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "10mb" }))
 app.use(express.urlencoded({ extended: true }))
-
-// --------------------
-// STATIC FILES
-// --------------------
-app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
 // --------------------
 // DATABASE
