@@ -2,18 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const multer = require('multer');
-const path = require('path');
+const cloudinary = require('../config/cloudinary');
 
-// Multer configuration for product image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads'));
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
-const upload = multer({ storage: storage });
+// ✅ Use memory storage (Vercel-safe)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Get all products
 router.get('/', async (req, res) => {
@@ -26,7 +18,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get a single product by ID
+// Get single product
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -40,18 +32,23 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create a new product (admin only) with image upload
+// Create product (with Cloudinary image)
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const productData = req.body;
 
     if (req.file) {
-      productData.image = req.file.path;
-      productData.imageUrl = `/uploads/${req.file.filename}`;
+      const uploadResult = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        { folder: 'products' }
+      );
+
+      productData.imageUrl = uploadResult.secure_url;
     }
 
     const product = new Product(productData);
     await product.save();
+
     res.status(201).json(product);
   } catch (error) {
     console.error("Error creating product:", error);
@@ -59,14 +56,18 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
-// Update a product (admin only) with optional image upload
+// Update product (with optional image)
 router.put('/:id', upload.single('image'), async (req, res) => {
   try {
     const productData = req.body;
 
     if (req.file) {
-      productData.image = req.file.path;
-      productData.imageUrl = `/uploads/${req.file.filename}`;
+      const uploadResult = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        { folder: 'products' }
+      );
+
+      productData.imageUrl = uploadResult.secure_url;
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -86,7 +87,7 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   }
 });
 
-// Delete a product (admin only)
+// Delete product
 router.delete('/:id', async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
