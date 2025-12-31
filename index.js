@@ -7,8 +7,6 @@ const path = require("path")
 const app = express()
 const PORT = process.env.PORT
 
-const allowedOrigin = [process.env.ADMIN_URL , process.env.CLIENT_URL]
-
 // --------------------
 // MIDDLEWARE
 // --------------------
