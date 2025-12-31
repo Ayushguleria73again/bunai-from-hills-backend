@@ -31,7 +31,9 @@ router.get('/:id', async (req, res) => {
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const productData = {
-      ...req.body,
+      title: req.body.title,
+      description: req.body.description,
+      category: req.body.category,
       price: Number(req.body.price),
       inStock: req.body.inStock === 'true'
     };
