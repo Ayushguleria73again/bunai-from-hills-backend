@@ -2,20 +2,16 @@ const express = require('express');
 const router = express.Router();
 const Gallery = require('../models/Gallery');
 const multer = require('multer');
-const path = require('path');
+const cloudinary = require('../config/cloudinary');
 
-// Multer configuration for gallery image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads'));
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+/* ================= MULTER (VERCEL SAFE) ================= */
+
+const upload = multer({
+  storage: multer.memoryStorage()
 });
-const upload = multer({ storage: storage });
 
-// Get all gallery items
+/* ================= GET ================= */
+
 router.get('/', async (req, res) => {
   try {
     const galleryItems = await Gallery.find({}).sort({ createdAt: -1 });
@@ -26,32 +22,40 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Add a new gallery item
+/* ================= CREATE ================= */
+
 router.post('/', upload.single('image'), async (req, res) => {
   try {
     const { title, description, category } = req.body;
 
-    if (req.file) {
-      const galleryItem = new Gallery({
-        title,
-        description,
-        image: req.file.path,
-        imageUrl: `/uploads/${req.file.filename}`,
-        category
-      });
-
-      await galleryItem.save();
-      res.status(201).json(galleryItem);
-    } else {
+    if (!req.file) {
       return res.status(400).json({ error: "Image is required" });
     }
+
+    // 🔥 CLOUDINARY UPLOAD
+    const result = await cloudinary.uploader.upload(
+      `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+      { folder: 'gallery' }
+    );
+
+    const galleryItem = new Gallery({
+      title,
+      description,
+      category,
+      imageUrl: result.secure_url
+    });
+
+    await galleryItem.save();
+    res.status(201).json(galleryItem);
+
   } catch (error) {
     console.error("Error creating gallery item:", error);
     res.status(400).json({ error: "Error creating gallery item" });
   }
 });
 
-// Delete a gallery item
+/* ================= DELETE ================= */
+
 router.delete('/:id', async (req, res) => {
   try {
     const galleryItem = await Gallery.findByIdAndDelete(req.params.id);

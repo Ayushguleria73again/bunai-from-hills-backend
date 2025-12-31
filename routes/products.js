@@ -2,21 +2,13 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const multer = require('multer');
-const path = require('path');
+const cloudinary = require('../config/cloudinary');
 
-/* ================= MULTER CONFIG ================= */
+/* ================= MULTER CONFIG (VERCEL SAFE) ================= */
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = Date.now() + '-' + file.originalname;
-    cb(null, uniqueName);
-  }
+const upload = multer({
+  storage: multer.memoryStorage()
 });
-
-const upload = multer({ storage });
 
 /* ================= GET ================= */
 
@@ -55,9 +47,14 @@ router.post('/', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: "Invalid product data" });
     }
 
+    // 🔥 CLOUDINARY UPLOAD
     if (req.file) {
-      productData.image = req.file.path;
-      productData.imageUrl = `/uploads/${req.file.filename}`;
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        { folder: 'products' }
+      );
+
+      productData.imageUrl = result.secure_url;
     }
 
     const product = new Product(productData);
@@ -83,8 +80,12 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     };
 
     if (req.file) {
-      productData.image = req.file.path;
-      productData.imageUrl = `/uploads/${req.file.filename}`;
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        { folder: 'products' }
+      );
+
+      productData.imageUrl = result.secure_url;
     }
 
     const product = await Product.findByIdAndUpdate(

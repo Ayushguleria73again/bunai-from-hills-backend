@@ -2,18 +2,15 @@ const express = require('express');
 const router = express.Router();
 const Blog = require('../models/Blog');
 const multer = require('multer');
-const path = require('path');
+const cloudinary = require('../config/cloudinary');
 
-// Multer configuration for blog image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads'));
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+/* ================= MULTER (VERCEL SAFE) ================= */
+
+const upload = multer({
+  storage: multer.memoryStorage()
 });
-const upload = multer({ storage: storage });
+
+/* ================= GET ================= */
 
 // Get all published blog posts
 router.get('/', async (req, res) => {
@@ -26,7 +23,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get all blog posts (for admin)
+// Get all blog posts (admin)
 router.get('/all', async (req, res) => {
   try {
     const blogs = await Blog.find({}).sort({ createdAt: -1 });
@@ -37,7 +34,7 @@ router.get('/all', async (req, res) => {
   }
 });
 
-// Get a single blog post by ID
+// Get single blog post
 router.get('/:id', async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
@@ -51,11 +48,22 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create a new blog post
+/* ================= CREATE ================= */
+
 router.post('/', upload.single('image'), async (req, res) => {
   try {
-    const { title, excerpt, content, author, category, readTime, tags, published } = req.body;
+    const {
+      title,
+      excerpt,
+      content,
+      author,
+      category,
+      readTime,
+      tags,
+      published
+    } = req.body;
 
+    // Parse tags safely
     let parsedTags = [];
     if (tags) {
       try {
@@ -76,13 +84,19 @@ router.post('/', upload.single('image'), async (req, res) => {
       published: published === 'true'
     };
 
+    // 🔥 CLOUDINARY UPLOAD
     if (req.file) {
-      blogData.image = req.file.path;
-      blogData.imageUrl = `/uploads/${req.file.filename}`;
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        { folder: 'blogs' }
+      );
+
+      blogData.imageUrl = result.secure_url;
     }
 
     const blog = new Blog(blogData);
     await blog.save();
+
     res.status(201).json(blog);
   } catch (error) {
     console.error("Error creating blog post:", error);
@@ -90,10 +104,20 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
-// Update a blog post
+/* ================= UPDATE ================= */
+
 router.put('/:id', upload.single('image'), async (req, res) => {
   try {
-    const { title, excerpt, content, author, category, readTime, tags, published } = req.body;
+    const {
+      title,
+      excerpt,
+      content,
+      author,
+      category,
+      readTime,
+      tags,
+      published
+    } = req.body;
 
     let parsedTags = [];
     if (tags) {
@@ -116,8 +140,12 @@ router.put('/:id', upload.single('image'), async (req, res) => {
     };
 
     if (req.file) {
-      blogData.image = req.file.path;
-      blogData.imageUrl = `/uploads/${req.file.filename}`;
+      const result = await cloudinary.uploader.upload(
+        `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+        { folder: 'blogs' }
+      );
+
+      blogData.imageUrl = result.secure_url;
     }
 
     const blog = await Blog.findByIdAndUpdate(
@@ -137,7 +165,8 @@ router.put('/:id', upload.single('image'), async (req, res) => {
   }
 });
 
-// Delete a blog post
+/* ================= DELETE ================= */
+
 router.delete('/:id', async (req, res) => {
   try {
     const blog = await Blog.findByIdAndDelete(req.params.id);
