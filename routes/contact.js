@@ -154,9 +154,9 @@ router.get('/', async (req, res) => {
 // Admin reply to customer (for admin panel)
 router.post('/reply', async (req, res) => {
   try {
-    const { toEmail, subject, message } = req.body;
+    const { name, email, message } = req.body;
 
-    if (!toEmail || !message) {
+    if (!email || !message) {
       return res.status(400).json({
         success: false,
         message: "Email and message are required",
@@ -166,7 +166,7 @@ router.post('/reply', async (req, res) => {
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       const mailOptions = {
         from: process.env.EMAIL_USER,
-        to: toEmail,
+        to: email,
         subject: subject || `Reply from Bunai From The Hills`,
         html: `
           <!DOCTYPE html>
