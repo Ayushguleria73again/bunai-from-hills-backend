@@ -167,7 +167,7 @@ router.post('/reply', async (req, res) => {
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: subject || `Reply from Bunai From The Hills`,
+        subject:`Reply from Bunai From The Hills`,
         html: `
           <!DOCTYPE html>
           <html>
@@ -235,6 +235,7 @@ router.post('/reply', async (req, res) => {
           <body>
             <div class="container">
               <div class="header">
+              <p>Hi ${name || "there"},</p>
                 <h1>Bunai From The Hills</h1>
               </div>
               <div class="content">
